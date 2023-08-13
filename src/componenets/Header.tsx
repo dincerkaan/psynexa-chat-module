@@ -15,6 +15,8 @@ import { firebaseAuth } from '../utils/FirebaseConfig';
 import { changeTheme } from '../app/slices/AuthSlice';
 import {
 	getCreateMeetingBreadCrumbs,
+	getMeetingsBreadcrumbs,
+	getMyMeetingsBreadcrumbs,
 	getOneonOneMeetingBreadCrumbs,
 	getVideoConferenceBreadCrumbs,
 } from '../utils/breadCrumbs';
@@ -39,6 +41,10 @@ function Header() {
 			setBreadCrumbs(getOneonOneMeetingBreadCrumbs(navigate));
 		else if (pathname === '/videoconference')
 			setBreadCrumbs(getVideoConferenceBreadCrumbs(navigate));
+		else if (pathname === '/mymeetings')
+			setBreadCrumbs(getMyMeetingsBreadcrumbs(navigate));
+		else if (pathname === '/meetings')
+			setBreadCrumbs(getMeetingsBreadcrumbs(navigate));
 	}, [location, navigate]);
 
 	const invertTheme = () => {

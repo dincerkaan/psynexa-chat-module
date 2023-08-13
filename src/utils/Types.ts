@@ -22,7 +22,7 @@ export interface MeetingType {
 	maxUsers: number;
 	meetingDate: string;
 	meetingId: string;
-	meetingNmae: string;
+	meetingName: string;
 	meetingType: MeetingJoinType;
 	status: boolean;
 }

@@ -16,46 +16,39 @@ import {
 import Header from '../componenets/Header';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import EditFlyout from '../componenets/EditFlyout';
 
-export default function MyMeetings() {
+export default function Meeting() {
 	useAuth();
 	const [meetings, setMeetings] = useState<any>([]);
 	const userInfo = useAppSelector((zoom) => zoom.auth.userInfo);
-	const getMyMeetings = async () => {
-		const firestoreQuery = query(
-			meetingsRef,
-			where('createdBy', '==', userInfo?.uid)
-		);
-		const fetchedMeetings = await getDocs(firestoreQuery);
-		if (fetchedMeetings.docs.length) {
-			const myMeetings: Array<MeetingType> = [];
-			fetchedMeetings.forEach((meeting) => {
-				myMeetings.push({
-					docId: meeting.id,
-					...(meeting.data() as MeetingType),
-				});
-			});
-			setMeetings(myMeetings);
-		}
-	};
 
 	useEffect(() => {
-		getMyMeetings();
+		if (userInfo) {
+			const getUserMeetings = async () => {
+				const firestoreQuery = query(meetingsRef);
+				const fetchedMeetings = await getDocs(firestoreQuery);
+				if (fetchedMeetings.docs.length) {
+					const myMeetings: Array<MeetingType> = [];
+					fetchedMeetings.forEach((meeting) => {
+						const data = meeting.data() as MeetingType;
+						if (data.createdBy === userInfo?.uid) myMeetings.push(data);
+						else if (data.meetingType === 'anyone-can-join')
+							myMeetings.push(data);
+						else {
+							const index = data.invitedUsers.findIndex(
+								(user) => user === userInfo.uid
+							);
+							if (index !== -1) {
+								myMeetings.push(data);
+							}
+						}
+					});
+					setMeetings(myMeetings);
+				}
+			};
+			getUserMeetings();
+		}
 	}, [userInfo]);
-
-	const [showEditFlyout, setShowEditFlyout] = useState(false);
-	const [editMeeting, setEditMeeting] = useState<MeetingType>();
-	const openEditFlyout = (meeting: MeetingType) => {
-		setShowEditFlyout(true);
-		setEditMeeting(meeting);
-	};
-
-	const closeEditFlyout = (dataChanged = false) => {
-		setShowEditFlyout(false);
-		setEditMeeting(undefined);
-		if (dataChanged) getMyMeetings();
-	};
 
 	const columns = [
 		{
@@ -97,25 +90,6 @@ export default function MyMeetings() {
 			},
 		},
 		{
-			field: '',
-			name: 'Edit',
-			render: (meeting: MeetingType) => {
-				return (
-					<EuiButtonIcon
-						aria-label='meeting-edit'
-						iconType='indexEdit'
-						color='danger'
-						display='base'
-						isDisabled={
-							!meeting.status ||
-							moment(meeting.meetingDate).isBefore(moment().format('L'))
-						}
-						onClick={() => openEditFlyout(meeting)}
-					/>
-				);
-			},
-		},
-		{
 			field: 'meetingId',
 			name: 'Copy Link',
 			render: (meetingId: string) => {
@@ -153,9 +127,6 @@ export default function MyMeetings() {
 					</EuiPanel>
 				</EuiFlexItem>
 			</EuiFlexGroup>
-			{showEditFlyout && (
-				<EditFlyout closeFlyout={closeEditFlyout} meetings={editMeeting!} />
-			)}
 		</div>
 	);
 }
